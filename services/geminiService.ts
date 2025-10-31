@@ -1,9 +1,21 @@
-
 import { GoogleGenAI } from "@google/genai";
 
-// FIX: Reverted to use process.env.API_KEY as per coding guidelines.
-// The execution environment is responsible for providing this variable.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+// A inicialização do cliente foi movida para uma função "getter" para ser preguiçosa (lazy).
+// Isso evita que o aplicativo falhe na inicialização se a API_KEY não estiver definida.
+let ai: GoogleGenAI | null = null;
+
+function getAiClient(): GoogleGenAI {
+  if (!process.env.API_KEY) {
+    // A verificação em App.tsx deve impedir que este código seja alcançado,
+    // mas lançamos um erro claro por segurança.
+    throw new Error("A chave de API do Google não está configurada no ambiente.");
+  }
+  if (!ai) {
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  }
+  return ai;
+}
+
 const model = 'gemini-2.5-flash';
 
 function fileToGenerativePart(file: File): Promise<{ inlineData: { data: string; mimeType: string; } }> {
@@ -11,7 +23,7 @@ function fileToGenerativePart(file: File): Promise<{ inlineData: { data: string;
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result !== 'string') {
-        return reject(new Error("FileReader did not return a string."));
+        return reject(new Error("O FileReader não retornou uma string."));
       }
       const base64Data = reader.result.split(',')[1];
       resolve({
@@ -28,6 +40,7 @@ function fileToGenerativePart(file: File): Promise<{ inlineData: { data: string;
 
 export async function identifyToolFromImage(imageFile: File, toolList: string[]): Promise<string> {
   try {
+    const localAi = getAiClient(); // O cliente é obtido e, se necessário, inicializado aqui.
     const imagePart = await fileToGenerativePart(imageFile);
     
     const prompt = `
@@ -38,14 +51,17 @@ export async function identifyToolFromImage(imageFile: File, toolList: string[])
       Se não for uma ferramenta, responda com "Não é uma ferramenta".
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await localAi.models.generateContent({
       model: model,
       contents: { parts: [imagePart, { text: prompt }] },
     });
 
     return response.text.trim();
   } catch (error) {
-    console.error("Error identifying tool:", error);
+    console.error("Erro ao identificar a ferramenta:", error);
+    if (error instanceof Error && error.message.includes("API_KEY")) {
+        throw new Error("A chave de API do Google não está configurada corretamente.");
+    }
     throw new Error("Não foi possível identificar a ferramenta. Tente novamente.");
   }
 }
