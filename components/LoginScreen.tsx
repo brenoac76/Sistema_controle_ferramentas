@@ -6,10 +6,9 @@ import { User } from '../types';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: User) => void;
-  onSwitchToSignUp: () => void;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onSwitchToSignUp }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -95,11 +94,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onSwitchToSig
               </button>
             </div>
           </form>
-          <p className="text-center text-sm">
-            <button onClick={onSwitchToSignUp} className="font-medium text-brand-light hover:text-brand-secondary">
-              Não tem uma conta? Cadastre-se
-            </button>
-          </p>
         </div>
       </div>
     </div>
