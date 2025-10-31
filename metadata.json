@@ -1,0 +1,5 @@
+{
+  "name": "Sistema de Protocolo de Ferramentas",
+  "description": "Um aplicativo web para catalogar ferramentas e gerenciar protocolos de empréstimo para funcionários, com identificação de ferramentas por imagem usando a API Gemini.",
+  "requestFramePermissions": []
+}
