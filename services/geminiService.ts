@@ -1,20 +1,31 @@
 import { GoogleGenAI } from "@google/genai";
 
-// A inicialização do cliente foi movida para uma função "getter" para ser preguiçosa (lazy).
-// Isso evita que o aplicativo falhe na inicialização se a API_KEY não estiver definida.
 let ai: GoogleGenAI | null = null;
+let activeApiKey: string | null = null;
 
 function getAiClient(): GoogleGenAI {
-  if (!process.env.API_KEY) {
-    // A verificação em App.tsx deve impedir que este código seja alcançado,
-    // mas lançamos um erro claro por segurança.
-    throw new Error("A chave de API do Google não está configurada no ambiente.");
+  const storedKey = window.localStorage.getItem('gemini-api-key');
+  
+  if (!storedKey) {
+    throw new Error("Nenhuma chave de API foi encontrada. Por favor, configure sua chave de API para usar esta funcionalidade.");
   }
-  if (!ai) {
-    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  // A chave é armazenada como uma string JSON, então precisamos fazer o parse.
+  const apiKey = JSON.parse(storedKey);
+
+  if (typeof apiKey !== 'string' || !apiKey) {
+    throw new Error("A chave de API armazenada é inválida. Por favor, configure-a novamente.");
   }
+  
+  // Se o cliente não existir ou a chave tiver sido alterada, crie uma nova instância.
+  if (!ai || activeApiKey !== apiKey) {
+    ai = new GoogleGenAI({ apiKey: apiKey });
+    activeApiKey = apiKey;
+  }
+
   return ai;
 }
+
 
 const model = 'gemini-2.5-flash';
 
@@ -40,7 +51,7 @@ function fileToGenerativePart(file: File): Promise<{ inlineData: { data: string;
 
 export async function identifyToolFromImage(imageFile: File, toolList: string[]): Promise<string> {
   try {
-    const localAi = getAiClient(); // O cliente é obtido e, se necessário, inicializado aqui.
+    const localAi = getAiClient();
     const imagePart = await fileToGenerativePart(imageFile);
     
     const prompt = `
@@ -59,9 +70,9 @@ export async function identifyToolFromImage(imageFile: File, toolList: string[])
     return response.text.trim();
   } catch (error) {
     console.error("Erro ao identificar a ferramenta:", error);
-    if (error instanceof Error && error.message.includes("API_KEY")) {
-        throw new Error("A chave de API do Google não está configurada corretamente.");
+    if (error instanceof Error && error.message.includes("API key")) {
+        throw new Error("A chave de API do Google não está configurada ou é inválida.");
     }
-    throw new Error("Não foi possível identificar a ferramenta. Tente novamente.");
+    throw new Error("Não foi possível identificar a ferramenta. Verifique sua chave de API e tente novamente.");
   }
 }

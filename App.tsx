@@ -9,90 +9,16 @@ import { AddIcon } from './components/icons/AddIcon';
 import FullLoanHistory from './components/FullLoanHistory';
 import EmployeeManager from './components/EmployeeManager';
 import AuthScreen from './components/AuthScreen';
+import ApiKeyPrompt from './components/ApiKeyPrompt';
 import { fetchData, postData } from './services/sheetService';
-import { WrenchIcon } from './components/icons/WrenchIcon';
-
-// Add type definition for the aistudio object on the window
-// Fix: Use a named interface 'AIStudio' to avoid declaration conflicts with other global types.
-interface AIStudio {
-  openSelectKey: () => Promise<void>;
-  hasSelectedApiKey: () => Promise<boolean>;
-}
-declare global {
-  interface Window {
-    aistudio?: AIStudio;
-  }
-}
 
 const App: React.FC = () => {
-  const handleSelectKey = async () => {
-    if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
-      try {
-        await window.aistudio.openSelectKey();
-        // After selection, reload the page to apply the new API key.
-        window.location.reload();
-      } catch (error) {
-        console.error("Error opening API key selector:", error);
-      }
-    }
-  };
+  // A verificação da chave de API agora é feita diretamente no localStorage.
+  // Isso funciona em qualquer ambiente de hospedagem (Netlify, Vercel, etc.).
+  const apiKey = window.localStorage.getItem('gemini-api-key');
 
-  // The primary check for the API key.
-  // If the key is missing, we first check for the interactive `aistudio` selection mechanism.
-  if (!process.env.API_KEY) {
-    // If the interactive mechanism is available, show the user-friendly prompt.
-    if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
-          <div className="w-full max-w-2xl bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-8 text-center">
-            <WrenchIcon className="mx-auto h-12 w-12 text-brand-primary" />
-            <h1 className="text-3xl font-extrabold text-gray-800 dark:text-white mt-4">Configuração de Chave de API Necessária</h1>
-            <p className="mt-4 text-lg text-gray-700 dark:text-gray-300">
-                Para utilizar este aplicativo, você precisa selecionar uma chave de API do Google Gemini.
-            </p>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                O uso da API Gemini pode incorrer em custos. Consulte a <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:underline">documentação de preços</a> para mais detalhes.
-            </p>
-            <div className="mt-8">
-                <button
-                onClick={handleSelectKey}
-                className="bg-brand-primary hover:bg-brand-secondary text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
-                >
-                Selecionar Chave de API
-                </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    
-    // Fallback: If the interactive mechanism is not available, show the original static instructions.
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-red-100 dark:bg-gray-900 px-4">
-        <div className="w-full max-w-2xl bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-8">
-          <div className="text-center">
-             <h1 className="text-3xl font-extrabold text-red-600 dark:text-red-400">Erro de Configuração</h1>
-             <p className="mt-4 text-lg text-gray-700 dark:text-gray-300">
-              A chave da API do Google Gemini não foi encontrada.
-            </p>
-          </div>
-         
-          <div className="mt-6 text-left bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
-            <h2 className="font-bold text-lg text-gray-800 dark:text-white">Ação Necessária</h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Por favor, configure sua chave de API como uma variável de ambiente chamada <code className="bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded font-mono text-xs">API_KEY</code> nas configurações do seu ambiente de hospedagem (ex: Vercel) ou de desenvolvimento.
-            </p>
-            <ol className="list-decimal list-inside mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-400">
-                <li>Vá para as <strong>Configurações do Projeto</strong>.</li>
-                <li>Encontre a seção de <strong>Variáveis de Ambiente</strong> (Environment Variables).</li>
-                <li>Crie uma nova variável com o nome <code className="bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded font-mono text-xs">API_KEY</code>.</li>
-                <li>Cole sua chave de API do Google AI Studio no valor.</li>
-                <li>Salve e faça o <strong>redeploy</strong> da aplicação.</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-    );
+  if (!apiKey) {
+    return <ApiKeyPrompt />;
   }
 
   const [user, setUser] = useState<User | null>(null);
