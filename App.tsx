@@ -13,6 +13,37 @@ import AuthScreen from './components/AuthScreen';
 import { fetchData, postData } from './services/sheetService';
 
 const App: React.FC = () => {
+  // FIX: Reverted to check for process.env.API_KEY as per guidelines.
+  // This aligns with the expected environment configuration and fixes the crash.
+  if (!process.env.API_KEY) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-red-100 dark:bg-gray-900 px-4">
+        <div className="w-full max-w-2xl bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-8">
+          <div className="text-center">
+             <h1 className="text-3xl font-extrabold text-red-600 dark:text-red-400">Erro de Configuração</h1>
+             <p className="mt-4 text-lg text-gray-700 dark:text-gray-300">
+              A chave da API do Google Gemini não foi encontrada.
+            </p>
+          </div>
+         
+          <div className="mt-6 text-left bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
+            <h2 className="font-bold text-lg text-gray-800 dark:text-white">Ação Necessária</h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Por favor, configure sua chave de API como uma variável de ambiente chamada <code className="bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded font-mono text-xs">API_KEY</code> nas configurações do seu ambiente de hospedagem (ex: Vercel) ou de desenvolvimento.
+            </p>
+            <ol className="list-decimal list-inside mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                <li>Vá para as <strong>Configurações do Projeto</strong>.</li>
+                <li>Encontre a seção de <strong>Variáveis de Ambiente</strong> (Environment Variables).</li>
+                <li>Crie uma nova variável com o nome <code className="bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded font-mono text-xs">API_KEY</code>.</li>
+                <li>Cole sua chave de API do Google AI Studio no valor.</li>
+                <li>Salve e faça o <strong>redeploy</strong> da aplicação.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

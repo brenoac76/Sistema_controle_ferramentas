@@ -1,7 +1,8 @@
+
 import { GoogleGenAI } from "@google/genai";
 
-// FIX: Refactored API key handling to align with Gemini API guidelines.
-// The API key is sourced directly from environment variables and is assumed to be always available.
+// FIX: Reverted to use process.env.API_KEY as per coding guidelines.
+// The execution environment is responsible for providing this variable.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 const model = 'gemini-2.5-flash';
 
